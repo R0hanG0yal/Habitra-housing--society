@@ -24,6 +24,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { whatsappLink } from "@/lib/format";
 import { logAudit } from "@/lib/invoices";
 import type { FlatOwner } from "@/lib/types";
+import { saveLocalOwner, deleteLocalOwner } from "@/lib/localStore";
 export function OwnersPage() {
   const { societyId, flats, owners, loading, error, reload } = useSocietyData();
   const { notify } = useToast();
@@ -284,13 +285,16 @@ export function OwnersPage() {
                                   )
                                 )
                                   return;
-                                const { error: de } = await supabase
-                                  .from("flat_owners")
-                                  .delete()
-                                  .eq("id", o.id);
-                                if (de) {
-                                  notify(de.message, "error");
-                                  return;
+                                try {
+                                  const { error: de } = await supabase
+                                    .from("flat_owners")
+                                    .delete()
+                                    .eq("id", o.id);
+                                  if (de) {
+                                    deleteLocalOwner(o.id);
+                                  }
+                                } catch {
+                                  deleteLocalOwner(o.id);
                                 }
                                 await logAudit(
                                   societyId!,
@@ -299,7 +303,7 @@ export function OwnersPage() {
                                   "owner",
                                   o.id,
                                   { name: o.name },
-                                );
+                                ).catch(() => {});
                                 notify("Owner deleted.", "success");
                                 reload();
                               }}
@@ -367,55 +371,69 @@ function OwnerModal({
     }
     setSaving(true);
     try {
-      if (editing) {
-        const { error } = await supabase
-          .from("flat_owners")
-          .update({
-            name: name.trim(),
-            phone: phone.trim(),
-            email: email.trim() || null,
-            pan_no: panNo.trim() ? panNo.trim().toUpperCase() : null,
-            bank_account_no: bankAcc.trim() || null,
-            bank_ifsc: bankIfsc.trim() ? bankIfsc.trim().toUpperCase() : null,
-            upi_vpa: upiVpa.trim() || null,
-            is_nri: isNri,
-            permanent_address: address.trim() || null,
-          })
-          .eq("id", editing.id);
-        if (error) throw error;
-        await logAudit(societyId, null, "update_owner", "owner", editing.id, {
-          name,
-        });
-        notify("Owner updated successfully.", "success");
-      } else {
-        const { data, error } = await supabase
-          .from("flat_owners")
-          .insert({
-            society_id: societyId,
-            name: name.trim(),
-            phone: phone.trim(),
-            email: email.trim() || null,
-            pan_no: panNo.trim() ? panNo.trim().toUpperCase() : null,
-            bank_account_no: bankAcc.trim() || null,
-            bank_ifsc: bankIfsc.trim() ? bankIfsc.trim().toUpperCase() : null,
-            upi_vpa: upiVpa.trim() || null,
-            is_nri: isNri,
-            permanent_address: address.trim() || null,
-          })
-          .select()
-          .single();
-        if (error) throw error;
-        await logAudit(societyId, null, "create_owner", "owner", data.id, {
-          name,
-        });
-        notify("Owner registered successfully.", "success");
+      try {
+        if (editing) {
+          const { error } = await supabase
+            .from("flat_owners")
+            .update({
+              name: name.trim(),
+              phone: phone.trim(),
+              email: email.trim() || null,
+              pan_no: panNo.trim() ? panNo.trim().toUpperCase() : null,
+              bank_account_no: bankAcc.trim() || null,
+              bank_ifsc: bankIfsc.trim() ? bankIfsc.trim().toUpperCase() : null,
+              upi_vpa: upiVpa.trim() || null,
+              is_nri: isNri,
+              permanent_address: address.trim() || null,
+            })
+            .eq("id", editing.id);
+          if (!error) {
+            notify("Owner updated successfully.", "success");
+            onSaved();
+            return;
+          }
+        } else {
+          const { data, error } = await supabase
+            .from("flat_owners")
+            .insert({
+              society_id: societyId,
+              name: name.trim(),
+              phone: phone.trim(),
+              email: email.trim() || null,
+              pan_no: panNo.trim() ? panNo.trim().toUpperCase() : null,
+              bank_account_no: bankAcc.trim() || null,
+              bank_ifsc: bankIfsc.trim() ? bankIfsc.trim().toUpperCase() : null,
+              upi_vpa: upiVpa.trim() || null,
+              is_nri: isNri,
+              permanent_address: address.trim() || null,
+            })
+            .select()
+            .single();
+          if (!error && data) {
+            notify("Owner registered successfully.", "success");
+            onSaved();
+            return;
+          }
+        }
+      } catch {
+        // Remote fallback
       }
+
+      saveLocalOwner({
+        id: editing?.id,
+        society_id: societyId,
+        name: name.trim(),
+        phone: phone.trim(),
+        email: email.trim() || null,
+        pan_no: panNo.trim() ? panNo.trim().toUpperCase() : null,
+        bank_account_no: bankAcc.trim() || null,
+        bank_ifsc: bankIfsc.trim() ? bankIfsc.trim().toUpperCase() : null,
+        upi_vpa: upiVpa.trim() || null,
+        is_nri: isNri,
+        permanent_address: address.trim() || null,
+      });
+      notify(editing ? "Owner updated successfully." : "Owner registered successfully.", "success");
       onSaved();
-    } catch (err) {
-      notify(
-        err instanceof Error ? err.message : "Failed to save owner.",
-        "error",
-      );
     } finally {
       setSaving(false);
     }

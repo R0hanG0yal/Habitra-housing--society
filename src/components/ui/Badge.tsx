@@ -7,15 +7,15 @@ type Tone =
 type Props = { tone?: Tone; children: ReactNode; className?: string };
 
 const tones: Record<Tone, string> = {
-  paid: "bg-success-500/12 text-success-700 font-medium",
-  success: "bg-success-500/12 text-success-700 font-medium",
-  occupied: "bg-success-500/12 text-success-700 font-medium",
-  pending: "bg-pending-500/12 text-pending-600 font-medium",
-  warning: "bg-warning-500/12 text-warning-600 font-medium",
+  paid: "bg-success-500/10 text-success-700 font-medium",
+  success: "bg-success-500/10 text-success-700 font-medium",
+  occupied: "bg-success-500/10 text-success-700 font-medium",
+  pending: "bg-pending-500/10 text-pending-600 font-medium",
+  warning: "bg-warning-500/10 text-warning-600 font-medium",
   overdue: "bg-brand-600/10 text-brand-700 font-medium",
   critical: "bg-ink-950 text-white font-medium",
-  partial: "bg-info-500/12 text-info-600 font-medium",
-  info: "bg-info-500/12 text-info-600 font-medium",
+  partial: "bg-info-500/10 text-info-600 font-medium",
+  info: "bg-info-500/10 text-info-600 font-medium",
   neutral: "bg-surface-3 text-ink-700 font-medium",
   vacant: "bg-surface-3 text-ink-500 font-medium",
   disabled: "bg-surface-2 text-ink-400 font-medium",

@@ -65,7 +65,7 @@ function ToastBubble({
         : "text-info-500";
 
   return (
-    <div className="flex items-start gap-3 bg-ink-950/95 backdrop-blur-xl text-white text-[13px] px-4.5 py-3 rounded-2xl shadow-pop animate-slide-up min-w-[280px] ring-1 ring-white/10">
+    <div className="flex items-start gap-3 bg-ink-950/95 backdrop-blur-xl text-white text-[13px] px-4 py-3 rounded-2xl shadow-pop animate-slide-up min-w-[280px] ring-1 ring-white/10">
       <Icon size={18} className={`${color} shrink-0 mt-0.5`} />
       <span className="flex-1">{item.message}</span>
       <button

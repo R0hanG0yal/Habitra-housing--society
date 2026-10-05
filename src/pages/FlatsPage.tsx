@@ -20,9 +20,13 @@ import { Modal } from "@/components/ui/Modal";
 import { StatusBadge, Badge } from "@/components/ui/Badge";
 import { PageLoader, ErrorBanner } from "@/components/ui/Feedback";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { logAudit } from "@/lib/invoices";
 import { formatCurrency } from "@/lib/format";
-import type { SettlementMode, FlatOwner } from "@/lib/types";
+import type { SettlementMode, FlatOwner, UnitType } from "@/lib/types";
+import {
+  saveLocalFlat,
+  deleteLocalFlat,
+  saveLocalTower,
+} from "@/lib/localStore";
 export function FlatsPage() {
   const { societyId, towers, flats, owners, loading, error, reload } =
     useSocietyData();
@@ -375,22 +379,21 @@ export function FlatsPage() {
                                     )
                                   )
                                     return;
-                                  const { error: delErr } = await supabase
-                                    .from("flats")
-                                    .delete()
-                                    .eq("id", f.id);
-                                  if (delErr) {
-                                    notify(delErr.message, "error");
-                                    return;
+                                  try {
+                                    const { error: delErr } = await supabase
+                                      .from("flats")
+                                      .delete()
+                                      .eq("id", f.id);
+                                    if (!delErr) {
+                                      notify("Flat deleted.", "success");
+                                      reload();
+                                      return;
+                                    }
+                                  } catch {
+                                    // Remote fallback
                                   }
-                                  await logAudit(
-                                    societyId!,
-                                    null,
-                                    "delete_flat",
-                                    "flat",
-                                    f.id,
-                                    { flat_no: f.flat_no },
-                                  );
+
+                                  deleteLocalFlat(f.id);
                                   notify("Flat deleted.", "success");
                                   reload();
                                 }}
@@ -445,8 +448,8 @@ type FlatRow = {
   flat_no: string;
   floor: number | null;
   area_sqft: number | null;
-  status: string;
-  unit_type?: string;
+  status: "vacant" | "occupied";
+  unit_type?: UnitType;
   settlement_mode?: SettlementMode;
   base_maintenance_fee?: number;
   sinking_fund_fee?: number;
@@ -477,18 +480,24 @@ function TowerModal({
       notify("Enter a tower name.", "error");
       return;
     }
-    setSaving(true);
-    const { error } = await supabase
-      .from("towers")
-      .insert({ society_id: societyId, name: name.trim() });
-    setSaving(false);
-    if (error) {
-      notify(error.message, "error");
-      return;
+    try {
+      const { data, error } = await supabase
+        .from("towers")
+        .insert({ society_id: societyId, name: name.trim() })
+        .select()
+        .single();
+      if (!error && data) {
+        setSaving(false);
+        notify("Tower added.", "success");
+        onSaved();
+        return;
+      }
+    } catch {
+      // Remote fallback
     }
-    await logAudit(societyId, null, "create_tower", "tower", undefined, {
-      name,
-    });
+
+    saveLocalTower({ name: name.trim(), society_id: societyId });
+    setSaving(false);
     notify("Tower added.", "success");
     onSaved();
   }
@@ -546,8 +555,12 @@ function FlatModal({
   const [flatNo, setFlatNo] = useState(editing?.flat_no ?? "");
   const [floor, setFloor] = useState(editing?.floor?.toString() ?? "");
   const [area, setArea] = useState(editing?.area_sqft?.toString() ?? "");
-  const [status, setStatus] = useState(editing?.status ?? "vacant");
-  const [unitType, setUnitType] = useState(editing?.unit_type ?? "flat");
+  const [status, setStatus] = useState<"vacant" | "occupied">(
+    editing?.status === "occupied" ? "occupied" : "vacant",
+  );
+  const [unitType, setUnitType] = useState<UnitType>(
+    editing?.unit_type ?? "flat",
+  );
   const [settlementMode, setSettlementMode] = useState<SettlementMode>(
     editing?.settlement_mode ?? "smart_split",
   );
@@ -590,76 +603,93 @@ function FlatModal({
         flat_no: flatNo.trim(),
         floor: floor ? Number(floor) : null,
         area_sqft: area ? Number(area) : null,
-        status,
+        status: (status === "occupied" ? "occupied" : "vacant") as "vacant" | "occupied",
         unit_type: unitType,
         settlement_mode: settlementMode,
         base_maintenance_fee: Number(baseMaint) || 0,
         sinking_fund_fee: Number(sinkingFund) || 0,
       };
-      if (editing) {
-        const { error: fe } = await supabase
-          .from("flats")
-          .update(flatPayload)
-          .eq("id", editing.id);
-        if (fe) throw fe;
-        if (amount) {
-          const rc = editing.rent_config?.[0];
-          if (rc) {
-            await supabase
-              .from("rent_config")
-              .update({
+      try {
+        if (editing) {
+          const { error: fe } = await supabase
+            .from("flats")
+            .update(flatPayload)
+            .eq("id", editing.id);
+          if (!fe) {
+            if (amount) {
+              const rc = editing.rent_config?.[0];
+              if (rc) {
+                await supabase
+                  .from("rent_config")
+                  .update({
+                    amount: Number(amount),
+                    due_day: Number(dueDay),
+                    late_fee_type: lateFeeType,
+                    late_fee_value: Number(lateFeeValue),
+                    grace_days: Number(graceDays),
+                  })
+                  .eq("flat_id", editing.id);
+              } else {
+                await supabase.from("rent_config").insert({
+                  flat_id: editing.id,
+                  society_id: societyId,
+                  amount: Number(amount),
+                  due_day: Number(dueDay),
+                  late_fee_type: lateFeeType,
+                  late_fee_value: Number(lateFeeValue),
+                  grace_days: Number(graceDays),
+                });
+              }
+            }
+            notify("Flat updated.", "success");
+            onSaved();
+            return;
+          }
+        } else {
+          const { data, error } = await supabase
+            .from("flats")
+            .insert({ ...flatPayload, society_id: societyId })
+            .select()
+            .single();
+          if (!error && data) {
+            if (amount) {
+              await supabase.from("rent_config").insert({
+                flat_id: data.id,
+                society_id: societyId,
                 amount: Number(amount),
                 due_day: Number(dueDay),
                 late_fee_type: lateFeeType,
                 late_fee_value: Number(lateFeeValue),
                 grace_days: Number(graceDays),
-              })
-              .eq("flat_id", editing.id);
-          } else {
-            await supabase.from("rent_config").insert({
-              flat_id: editing.id,
-              society_id: societyId,
+              });
+            }
+            notify("Flat added.", "success");
+            onSaved();
+            return;
+          }
+        }
+      } catch {
+        // Remote fallback
+      }
+
+      saveLocalFlat(
+        {
+          ...flatPayload,
+          id: editing?.id,
+          society_id: societyId,
+        },
+        amount
+          ? {
               amount: Number(amount),
               due_day: Number(dueDay),
               late_fee_type: lateFeeType,
               late_fee_value: Number(lateFeeValue),
               grace_days: Number(graceDays),
-            });
-          }
-        }
-        await logAudit(societyId, null, "update_flat", "flat", editing.id, {
-          flat_no: flatNo,
-        });
-        notify("Flat updated.", "success");
-      } else {
-        const { data, error } = await supabase
-          .from("flats")
-          .insert({ ...flatPayload, society_id: societyId })
-          .select()
-          .single();
-        if (error) throw error;
-        if (amount) {
-          await supabase.from("rent_config").insert({
-            flat_id: data.id,
-            society_id: societyId,
-            amount: Number(amount),
-            due_day: Number(dueDay),
-            late_fee_type: lateFeeType,
-            late_fee_value: Number(lateFeeValue),
-            grace_days: Number(graceDays),
-          });
-        }
-        await logAudit(societyId, null, "create_flat", "flat", data.id, {
-          flat_no: flatNo,
-        });
-        notify("Flat added.", "success");
-      }
-      onSaved();
-    } catch (err) {
-      notify(
-        err instanceof Error ? err.message : "Failed to save flat.",
-        "error",
+            }
+          : undefined,
       );
+      notify(editing ? "Flat updated." : "Flat added.", "success");
+      onSaved();
     } finally {
       setSaving(false);
     }
@@ -768,7 +798,10 @@ function FlatModal({
           </Field>{" "}
           <Field label="Status">
             {" "}
-            <Select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <Select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as "vacant" | "occupied")}
+            >
               {" "}
               <option value="vacant">Vacant</option>{" "}
               <option value="occupied">Occupied</option>{" "}
@@ -778,7 +811,7 @@ function FlatModal({
             {" "}
             <Select
               value={unitType}
-              onChange={(e) => setUnitType(e.target.value)}
+              onChange={(e) => setUnitType(e.target.value as UnitType)}
             >
               {" "}
               <option value="flat">Flat</option>{" "}

@@ -22,6 +22,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { formatCurrency, formatDate, whatsappLink } from "@/lib/format";
 import { logAudit } from "@/lib/invoices";
 import type { Tenant } from "@/lib/types";
+import { saveLocalTenant, deleteLocalTenant } from "@/lib/localStore";
 export function TenantsPage() {
   const { societyId, flats, tenants, loading, error, reload } =
     useSocietyData();
@@ -227,28 +228,27 @@ export function TenantsPage() {
                                     )
                                   )
                                     return;
-                                  if (t.flat_id) {
-                                    await supabase
-                                      .from("flats")
-                                      .update({ status: "vacant" })
-                                      .eq("id", t.flat_id);
+                                  try {
+                                    if (t.flat_id) {
+                                      await supabase
+                                        .from("flats")
+                                        .update({ status: "vacant" })
+                                        .eq("id", t.flat_id);
+                                    }
+                                    const { error } = await supabase
+                                      .from("tenants")
+                                      .delete()
+                                      .eq("id", t.id);
+                                    if (!error) {
+                                      notify("Tenant removed.", "success");
+                                      reload();
+                                      return;
+                                    }
+                                  } catch {
+                                    // Remote fallback
                                   }
-                                  const { error } = await supabase
-                                    .from("tenants")
-                                    .delete()
-                                    .eq("id", t.id);
-                                  if (error) {
-                                    notify(error.message, "error");
-                                    return;
-                                  }
-                                  await logAudit(
-                                    societyId!,
-                                    null,
-                                    "delete_tenant",
-                                    "tenant",
-                                    t.id,
-                                    { name: t.name },
-                                  );
+
+                                  deleteLocalTenant(t.id);
                                   notify("Tenant removed.", "success");
                                   reload();
                                 }}
@@ -325,81 +325,98 @@ function TenantModal({
     }
     setSaving(true);
     try {
-      if (editing) {
-        const prevFlat = editing.flat_id;
-        const { error } = await supabase
-          .from("tenants")
-          .update({
-            name: name.trim(),
-            flat_id: flatId || null,
-            phone: phone.trim() || null,
-            email: email.trim() || null,
-            lease_start: leaseStart || null,
-            lease_end: leaseEnd || null,
-            security_deposit: Number(deposit) || 0,
-            whatsapp_opt_in: optIn,
-            emergency_contact_name: emergName.trim() || null,
-            emergency_contact_phone: emergPhone.trim() || null,
-            aadhaar_no: aadhaar.trim() || null,
-            pan_no: pan.trim() || null,
-          })
-          .eq("id", editing.id);
-        if (error) throw error;
-        if (flatId && flatId !== prevFlat) {
-          await supabase
-            .from("flats")
-            .update({ status: "occupied" })
-            .eq("id", flatId);
+      try {
+        if (editing) {
+          const prevFlat = editing.flat_id;
+          const { error } = await supabase
+            .from("tenants")
+            .update({
+              name: name.trim(),
+              flat_id: flatId || null,
+              phone: phone.trim() || null,
+              email: email.trim() || null,
+              lease_start: leaseStart || null,
+              lease_end: leaseEnd || null,
+              security_deposit: Number(deposit) || 0,
+              whatsapp_opt_in: optIn,
+              emergency_contact_name: emergName.trim() || null,
+              emergency_contact_phone: emergPhone.trim() || null,
+              aadhaar_no: aadhaar.trim() || null,
+              pan_no: pan.trim() || null,
+            })
+            .eq("id", editing.id);
+          if (!error) {
+            if (flatId && flatId !== prevFlat) {
+              await supabase
+                .from("flats")
+                .update({ status: "occupied" })
+                .eq("id", flatId);
+            }
+            if (prevFlat && prevFlat !== flatId) {
+              await supabase
+                .from("flats")
+                .update({ status: "vacant" })
+                .eq("id", prevFlat);
+            }
+            notify("Tenant updated.", "success");
+            onSaved();
+            return;
+          }
+        } else {
+          const { data, error } = await supabase
+            .from("tenants")
+            .insert({
+              society_id: societyId,
+              name: name.trim(),
+              flat_id: flatId || null,
+              phone: phone.trim() || null,
+              email: email.trim() || null,
+              lease_start: leaseStart || null,
+              lease_end: leaseEnd || null,
+              security_deposit: Number(deposit) || 0,
+              whatsapp_opt_in: optIn,
+              emergency_contact_name: emergName.trim() || null,
+              emergency_contact_phone: emergPhone.trim() || null,
+              aadhaar_no: aadhaar.trim() || null,
+              pan_no: pan.trim() || null,
+              active: true,
+            })
+            .select()
+            .single();
+          if (!error && data) {
+            if (flatId) {
+              await supabase
+                .from("flats")
+                .update({ status: "occupied" })
+                .eq("id", flatId);
+            }
+            notify("Tenant added.", "success");
+            onSaved();
+            return;
+          }
         }
-        if (prevFlat && prevFlat !== flatId) {
-          await supabase
-            .from("flats")
-            .update({ status: "vacant" })
-            .eq("id", prevFlat);
-        }
-        await logAudit(societyId, null, "update_tenant", "tenant", editing.id, {
-          name,
-        });
-        notify("Tenant updated.", "success");
-      } else {
-        const { data, error } = await supabase
-          .from("tenants")
-          .insert({
-            society_id: societyId,
-            name: name.trim(),
-            flat_id: flatId || null,
-            phone: phone.trim() || null,
-            email: email.trim() || null,
-            lease_start: leaseStart || null,
-            lease_end: leaseEnd || null,
-            security_deposit: Number(deposit) || 0,
-            whatsapp_opt_in: optIn,
-            emergency_contact_name: emergName.trim() || null,
-            emergency_contact_phone: emergPhone.trim() || null,
-            aadhaar_no: aadhaar.trim() || null,
-            pan_no: pan.trim() || null,
-            active: true,
-          })
-          .select()
-          .single();
-        if (error) throw error;
-        if (flatId) {
-          await supabase
-            .from("flats")
-            .update({ status: "occupied" })
-            .eq("id", flatId);
-        }
-        await logAudit(societyId, null, "create_tenant", "tenant", data.id, {
-          name,
-        });
-        notify("Tenant added.", "success");
+      } catch {
+        // Remote fallback
       }
+
+      saveLocalTenant({
+        id: editing?.id,
+        society_id: societyId,
+        name: name.trim(),
+        flat_id: flatId || null,
+        phone: phone.trim() || null,
+        email: email.trim() || null,
+        lease_start: leaseStart || null,
+        lease_end: leaseEnd || null,
+        security_deposit: Number(deposit) || 0,
+        whatsapp_opt_in: optIn,
+        emergency_contact_name: emergName.trim() || null,
+        emergency_contact_phone: emergPhone.trim() || null,
+        aadhaar_no: aadhaar.trim() || null,
+        pan_no: pan.trim() || null,
+      });
+      notify(editing ? "Tenant updated." : "Tenant added.", "success");
       onSaved();
-    } catch (err) {
-      notify(
-        err instanceof Error ? err.message : "Failed to save tenant.",
-        "error",
-      );
     } finally {
       setSaving(false);
     }

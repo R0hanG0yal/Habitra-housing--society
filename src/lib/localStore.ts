@@ -469,3 +469,223 @@ export function updateLocalInvoiceStatus(invoiceId: string, status: Invoice["sta
     setItem(KEYS.INVOICES, invoices);
   }
 }
+
+// ==========================================
+// FLATS & TOWERS
+// ==========================================
+export function getLocalFlats(societyId: string): Flat[] {
+  initLocalStore();
+  const flats = getItem<Flat[]>(KEYS.FLATS, []);
+  return flats.filter((f) => f.society_id === societyId);
+}
+
+export function saveLocalFlat(
+  flatPayload: Partial<Flat> & { id?: string; society_id: string; flat_no: string; tower_id: string },
+  rentConfigPayload?: any,
+): Flat {
+  const flats = getItem<Flat[]>(KEYS.FLATS, []);
+  let savedFlat: Flat;
+
+  if (flatPayload.id) {
+    const idx = flats.findIndex((f) => f.id === flatPayload.id);
+    if (idx !== -1) {
+      flats[idx] = { ...flats[idx], ...flatPayload } as Flat;
+      savedFlat = flats[idx];
+    } else {
+      savedFlat = {
+        id: flatPayload.id,
+        created_at: new Date().toISOString(),
+        floor: 1,
+        area_sqft: 1200,
+        status: "vacant",
+        unit_type: "flat",
+        settlement_mode: "smart_split",
+        base_maintenance_fee: 4500,
+        sinking_fund_fee: 800,
+        ...flatPayload,
+      } as Flat;
+      flats.push(savedFlat);
+    }
+  } else {
+    savedFlat = {
+      id: "flat_" + Math.random().toString(36).substring(2, 9),
+      created_at: new Date().toISOString(),
+      floor: 1,
+      area_sqft: 1200,
+      status: "vacant",
+      unit_type: "flat",
+      settlement_mode: "smart_split",
+      base_maintenance_fee: 4500,
+      sinking_fund_fee: 800,
+      ...flatPayload,
+    } as Flat;
+    flats.push(savedFlat);
+  }
+  setItem(KEYS.FLATS, flats);
+
+  // If rentConfig provided, save or update
+  if (rentConfigPayload) {
+    const rentConfigs = getItem<any[]>("habitra.db.rent_configs", []);
+    const idx = rentConfigs.findIndex((r) => r.flat_id === savedFlat.id);
+    if (idx !== -1) {
+      rentConfigs[idx] = { ...rentConfigs[idx], ...rentConfigPayload, flat_id: savedFlat.id };
+    } else {
+      rentConfigs.push({
+        id: "rc_" + savedFlat.id,
+        flat_id: savedFlat.id,
+        society_id: savedFlat.society_id,
+        due_day: 5,
+        late_fee_type: "fixed",
+        late_fee_value: 500,
+        grace_days: 5,
+        ...rentConfigPayload,
+      });
+    }
+    setItem("habitra.db.rent_configs", rentConfigs);
+  }
+
+  return savedFlat;
+}
+
+export function deleteLocalFlat(flatId: string): void {
+  const flats = getItem<Flat[]>(KEYS.FLATS, []);
+  setItem(
+    KEYS.FLATS,
+    flats.filter((f) => f.id !== flatId),
+  );
+}
+
+export function saveLocalTower(tower: { name: string; society_id: string }): { id: string; name: string; society_id: string; created_at: string } {
+  const towers = getItem<any[]>("habitra.db.towers", [
+    { id: "tower_1", name: "Tower A (Aster)", society_id: tower.society_id, created_at: new Date().toISOString() },
+    { id: "tower_2", name: "Tower B (Birch)", society_id: tower.society_id, created_at: new Date().toISOString() },
+  ]);
+  const newTower = {
+    id: "tower_" + Math.random().toString(36).substring(2, 9),
+    name: tower.name.trim(),
+    society_id: tower.society_id,
+    created_at: new Date().toISOString(),
+  };
+  towers.push(newTower);
+  setItem("habitra.db.towers", towers);
+  return newTower;
+}
+
+// ==========================================
+// TENANTS & OWNERS
+// ==========================================
+export function saveLocalTenant(payload: Partial<Tenant> & { id?: string; society_id: string; name: string }): Tenant {
+  const tenants = getItem<Tenant[]>(KEYS.TENANTS, []);
+  let saved: Tenant;
+
+  if (payload.id) {
+    const idx = tenants.findIndex((t) => t.id === payload.id);
+    if (idx !== -1) {
+      tenants[idx] = { ...tenants[idx], ...payload } as Tenant;
+      saved = tenants[idx];
+    } else {
+      saved = {
+        id: payload.id,
+        flat_id: null,
+        phone: null,
+        email: null,
+        lease_start: null,
+        lease_end: null,
+        security_deposit: 0,
+        active: true,
+        whatsapp_opt_in: true,
+        emergency_contact_name: null,
+        emergency_contact_phone: null,
+        aadhaar_no: null,
+        pan_no: null,
+        created_at: new Date().toISOString(),
+        ...payload,
+      } as Tenant;
+      tenants.push(saved);
+    }
+  } else {
+    saved = {
+      id: "ten_" + Math.random().toString(36).substring(2, 9),
+      flat_id: null,
+      phone: null,
+      email: null,
+      lease_start: null,
+      lease_end: null,
+      security_deposit: 0,
+      active: true,
+      whatsapp_opt_in: true,
+      emergency_contact_name: null,
+      emergency_contact_phone: null,
+      aadhaar_no: null,
+      pan_no: null,
+      created_at: new Date().toISOString(),
+      ...payload,
+    } as Tenant;
+    tenants.push(saved);
+  }
+  setItem(KEYS.TENANTS, tenants);
+  return saved;
+}
+
+export function deleteLocalTenant(tenantId: string): void {
+  const tenants = getItem<Tenant[]>(KEYS.TENANTS, []);
+  setItem(
+    KEYS.TENANTS,
+    tenants.filter((t) => t.id !== tenantId),
+  );
+}
+
+export function saveLocalOwner(payload: Partial<FlatOwner> & { id?: string; society_id: string; name: string }): FlatOwner {
+  const owners = getItem<FlatOwner[]>(KEYS.OWNERS, []);
+  let saved: FlatOwner;
+
+  if (payload.id) {
+    const idx = owners.findIndex((o) => o.id === payload.id);
+    if (idx !== -1) {
+      owners[idx] = { ...owners[idx], ...payload } as FlatOwner;
+      saved = owners[idx];
+    } else {
+      saved = {
+        id: payload.id,
+        phone: "",
+        email: null,
+        pan_no: null,
+        bank_account_no: null,
+        bank_ifsc: null,
+        upi_vpa: null,
+        is_nri: false,
+        permanent_address: null,
+        created_at: new Date().toISOString(),
+        ...payload,
+      } as FlatOwner;
+      owners.push(saved);
+    }
+  } else {
+    saved = {
+      id: "own_" + Math.random().toString(36).substring(2, 9),
+      phone: "",
+      email: null,
+      pan_no: null,
+      bank_account_no: null,
+      bank_ifsc: null,
+      upi_vpa: null,
+      is_nri: false,
+      permanent_address: null,
+      created_at: new Date().toISOString(),
+      ...payload,
+    } as FlatOwner;
+    owners.push(saved);
+  }
+  setItem(KEYS.OWNERS, owners);
+  return saved;
+}
+
+export function deleteLocalOwner(ownerId: string): void {
+  const owners = getItem<FlatOwner[]>(KEYS.OWNERS, []);
+  setItem(
+    KEYS.OWNERS,
+    owners.filter((o) => o.id !== ownerId),
+  );
+}
+
+

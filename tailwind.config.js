@@ -8,6 +8,13 @@ export default {
         display: ['Fraunces', 'Georgia', 'serif'],
         mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
+      // Tailwind v3 only ships opacity steps in multiples of 5 (plus a few);
+      // extend so /15, /25, /45 modifiers actually generate CSS.
+      opacity: {
+        15: '0.15',
+        25: '0.25',
+        45: '0.45',
+      },
       colors: {
         // ── Canvas & Surfaces ────────────────────────────────
         // Warm porcelain canvas, crisp white cards, soft warm tints.
