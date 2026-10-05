@@ -80,7 +80,7 @@ export function CookieConsentBanner() {
           className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:max-w-xl z-50 bg-white border border-line shadow-pop rounded-2xl p-5 animate-slide-up text-ink-800"
         >
           <div className="flex items-start gap-3.5">
-            <div className="w-9 h-9 rounded-lg bg-brand-50 ring-1 ring-brand-200/60 flex items-center justify-center text-brand-600 shrink-0 mt-0.5">
+            <div className="w-9 h-9 rounded-2xl bg-surface-2 flex items-center justify-center text-ink-500 shrink-0 mt-0.5">
               <Cookie className="w-5 h-5" />
             </div>
             <div className="space-y-1.5 flex-1">
@@ -138,7 +138,7 @@ export function CookieConsentBanner() {
           <div className="bg-white border border-line rounded-2xl w-full max-w-lg p-6 shadow-pop space-y-5 text-ink-800 animate-scale-in">
             <div className="flex items-center justify-between border-b border-line pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-brand-50 ring-1 ring-brand-200/60 text-brand-600 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-surface-2 text-ink-500 flex items-center justify-center">
                   <Lock className="w-4 h-4" />
                 </div>
                 <div>

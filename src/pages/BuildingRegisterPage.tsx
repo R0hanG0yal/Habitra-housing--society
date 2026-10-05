@@ -193,7 +193,7 @@ export function BuildingRegisterPage() {
       <div className="bg-surface-2 p-6 rounded-xl border border-line-strong shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-brand-600 text-white">
+            <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-ink-950 text-white">
               Building Owner Portal
             </span>
             <span className="flex items-center gap-1 text-xs text-success-500 font-semibold">
@@ -209,7 +209,7 @@ export function BuildingRegisterPage() {
           <button
             onClick={() => setActiveTab('register')}
             className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
-              activeTab === 'register' ? 'bg-brand-600 text-white shadow-xs' : 'text-ink-900 hover:bg-surface-2'
+              activeTab === 'register' ? 'bg-ink-950 text-white shadow-xs' : 'text-ink-900 hover:bg-surface-2'
             }`}
           >
             Register Building
@@ -217,7 +217,7 @@ export function BuildingRegisterPage() {
           <button
             onClick={() => setActiveTab('status')}
             className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
-              activeTab === 'status' ? 'bg-brand-600 text-white shadow-xs' : 'text-ink-900 hover:bg-surface-2'
+              activeTab === 'status' ? 'bg-ink-950 text-white shadow-xs' : 'text-ink-900 hover:bg-surface-2'
             }`}
           >
             Status ({registrations.length})
@@ -225,7 +225,7 @@ export function BuildingRegisterPage() {
           <button
             onClick={() => setActiveTab('join')}
             className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${
-              activeTab === 'join' ? 'bg-brand-600 text-white shadow-xs' : 'text-ink-900 hover:bg-surface-2'
+              activeTab === 'join' ? 'bg-ink-950 text-white shadow-xs' : 'text-ink-900 hover:bg-surface-2'
             }`}
           >
             Join Existing
@@ -328,7 +328,7 @@ export function BuildingRegisterPage() {
                 </div>
 
                 <div className="flex justify-center">
-                  <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-md shadow-xs transition">
+                  <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-ink-950 hover:bg-black text-white text-xs font-semibold rounded-md shadow-xs transition">
                     <FileText size={14} />
                     {fileName ? 'Replace Document' : 'Choose Document'}
                     <input
@@ -374,7 +374,7 @@ export function BuildingRegisterPage() {
                   variant="primary"
                   size="lg"
                   disabled={submitting || fileUploading}
-                  className="bg-brand-600 hover:bg-brand-700 text-white min-w-[200px]"
+                  className="bg-ink-950 hover:bg-black text-white min-w-[200px]"
                 >
                   {submitting ? 'Submitting Registration…' : 'Submit for Admin Review'}
                 </Button>
@@ -399,7 +399,7 @@ export function BuildingRegisterPage() {
                   variant="primary"
                   size="sm"
                   onClick={() => setActiveTab('register')}
-                  className="mt-4 bg-brand-600 text-white"
+                  className="mt-4 bg-ink-950 text-white"
                 >
                   Register Building Now
                 </Button>
@@ -507,7 +507,7 @@ export function BuildingRegisterPage() {
                 type="submit"
                 variant="primary"
                 disabled={joining}
-                className="bg-brand-600 text-white w-full"
+                className="bg-ink-950 text-white w-full"
               >
                 {joining ? 'Connecting…' : 'Connect to Society'}
               </Button>

@@ -275,7 +275,7 @@ export function TenantDashboard() {
                     size="sm"
                     onClick={handlePayRent}
                     disabled={submitting}
-                    className="bg-success-500 hover:bg-success-600 text-white font-semibold"
+                    className="bg-ink-950 hover:bg-black text-white font-semibold"
                   >
                     Pay from Wallet
                   </Button>
