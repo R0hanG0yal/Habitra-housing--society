@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+@layer base {
+  body {
+    margin: 0;
+    background-color: #faf7f2; /* warm porcelain canvas */
+    color: #33281f; /* ink-800 default text */
+  }
+
+  /* Apple-grade display type: big, confident, tight */
+  h1, h2, h3 {
+    letter-spacing: -0.022em;
+  }
+  h1 { text-wrap: balance; }
+}
+
+/* ── Typographic accents ─────────────────────────────── */
+.font-display {
+  font-family: var(--font-sans);
+  letter-spacing: -0.025em;
+  font-feature-settings: "ss01" on;
+}
+.font-mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background-color: #722f37; /* brand-600 */
+  color: #ffffff;
+}
+
+/* ── Scrollbar ───────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d8cdbc; /* line-strong */
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a2937f; /* ink-400 */
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* ── Focus ring (accessible, brand-colored) ──────────── */
+*:focus-visible {
+  outline: 2px solid #722f37;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Glass materials ─────────────────────────────────── */
+.glass-topbar {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: saturate(1.8) blur(20px);
+  -webkit-backdrop-filter: saturate(1.8) blur(20px);
+}
+.glass-panel {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* ── Motion ──────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+.animate-fade-in { animation: fadeIn 220ms ease-out; }
+.animate-slide-up { animation: slideUp 280ms cubic-bezier(0.16, 1, 0.3, 1); }
+.animate-scale-in { animation: scaleIn 200ms cubic-bezier(0.16, 1, 0.3, 1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-up,
+  .animate-scale-in {
+    animation: none;
+  }
+  html { scroll-behavior: auto; }
+}
+
+/* ── Utility: tabular numerals for financial data ────── */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

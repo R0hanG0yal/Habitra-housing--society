@@ -1,0 +1,14 @@
+# Habitra Robots.txt - Strict Privacy & Indexing Directives
+User-agent: *
+Allow: /
+Allow: /portal
+Allow: /privacy
+Allow: /terms
+Allow: /refund
+Allow: /cookies
+Disallow: /api/
+Disallow: /storage/
+Disallow: /admin/
+
+# Sitemap location
+Sitemap: https://habitra.in/sitemap.xml

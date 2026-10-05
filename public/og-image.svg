@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <!-- Solid Canvas in Mocha Cream #B7A89A (Zero Gradients) -->
+  <rect width="1200" height="630" fill="#B7A89A" />
+
+  <!-- Inner Border Frame in #9E8F82 -->
+  <rect x="30" y="30" width="1140" height="570" rx="8" fill="#B7A89A" stroke="#9E8F82" stroke-width="2" />
+
+  <!-- Header Band -->
+  <g transform="translate(80, 90)">
+    <!-- Deep Burgundy Icon Box -->
+    <rect width="64" height="64" rx="6" fill="#722F37" />
+    <path d="M20 18V46M44 18V46M20 32H44" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+
+    <!-- Wordmark in Rich Brown #2E1A11 -->
+    <text x="85" y="46" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="40" font-weight="800" fill="#2E1A11">HABITRA</text>
+
+    <!-- Badge in Deep Burgundy #722F37 with White text -->
+    <rect x="290" y="18" width="80" height="30" rx="4" fill="#722F37" />
+    <text x="330" y="39" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" fill="#FFFFFF" text-anchor="middle">RWA</text>
+  </g>
+
+  <!-- Headline & Subtitle -->
+  <g transform="translate(80, 240)">
+    <text x="0" y="0" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="52" font-weight="800" fill="#2E1A11" letter-spacing="-1">
+      Housing Society &amp; Rental
+    </text>
+    <text x="0" y="65" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="52" font-weight="800" fill="#722F37" letter-spacing="-1">
+      Operations Software
+    </text>
+
+    <text x="0" y="130" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="500" fill="#4D3B30">
+      Maintenance demand, tenant billing, vendor AMCs, and statutory registers under Cooperative Bye-Laws.
+    </text>
+  </g>
+
+  <!-- Modular Feature Boxes (Solid, Crisp, Non-Pill) -->
+  <g transform="translate(80, 460)">
+    <rect x="0" y="0" width="230" height="52" rx="6" fill="#A99A8C" stroke="#9E8F82" stroke-width="1.5" />
+    <text x="115" y="32" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="600" fill="#2E1A11" text-anchor="middle">DPDP 2023 Compliant</text>
+
+    <rect x="250" y="0" width="230" height="52" rx="6" fill="#A99A8C" stroke="#9E8F82" stroke-width="1.5" />
+    <text x="365" y="32" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="600" fill="#2E1A11" text-anchor="middle">SmartSplit Escrow</text>
+
+    <rect x="500" y="0" width="230" height="52" rx="6" fill="#A99A8C" stroke="#9E8F82" stroke-width="1.5" />
+    <text x="615" y="32" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="600" fill="#2E1A11" text-anchor="middle">Statutory AGM &amp; E-Voting</text>
+
+    <rect x="750" y="0" width="230" height="52" rx="6" fill="#A99A8C" stroke="#9E8F82" stroke-width="1.5" />
+    <text x="865" y="32" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="15" font-weight="600" fill="#2E1A11" text-anchor="middle">Vendor AMC Tracker</text>
+  </g>
+</svg>
