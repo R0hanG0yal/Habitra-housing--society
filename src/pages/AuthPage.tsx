@@ -14,6 +14,7 @@ import {
   Users,
   CheckCircle2,
   Wallet,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/components/ui/Toast";
@@ -251,7 +252,7 @@ export function AuthPage() {
                 ))}
               </div>
 
-              <div className="mt-6 pt-5 border-t border-line">
+              <div className="mt-6 pt-5 border-t border-line space-y-3">
                 <p className="text-sm text-ink-500 text-center">
                   Already have an account?{" "}
                   <button
@@ -264,6 +265,17 @@ export function AuthPage() {
                     Sign in
                   </button>
                 </p>
+
+                <div className="text-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/landing")}
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-700 hover:text-brand-800 bg-brand-50 hover:bg-brand-100 px-3.5 py-1.5 rounded-full border border-brand-200 transition"
+                  >
+                    <Sparkles size={13} />
+                    Explore Product Tour, Modules & Pricing
+                  </button>
+                </div>
               </div>
             </>
           ) : (

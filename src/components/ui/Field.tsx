@@ -64,12 +64,14 @@ export function Field({
   htmlFor,
   children,
   hint,
+  error,
 }: {
   label: string;
   required?: boolean;
   htmlFor?: string;
   children: ReactNode;
   hint?: string;
+  error?: string;
 }) {
   return (
     <div>
@@ -77,7 +79,8 @@ export function Field({
         {label}
       </Label>
       {children}
-      {hint && <p className="mt-1.5 text-xs text-ink-500">{hint}</p>}
+      {error && <p className="mt-1.5 text-xs text-red-600 font-medium">{error}</p>}
+      {hint && !error && <p className="mt-1.5 text-xs text-ink-500">{hint}</p>}
     </div>
   );
 }

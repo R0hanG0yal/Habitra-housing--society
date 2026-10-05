@@ -47,6 +47,7 @@ import { TermsPage } from "@/pages/TermsPage";
 import { RefundPolicyPage } from "@/pages/RefundPolicyPage";
 import { CookiePolicyPage } from "@/pages/CookiePolicyPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
+import { LandingPage } from "@/pages/LandingPage";
 
 function Routes() {
   const { path } = useRouter();
@@ -56,6 +57,8 @@ function Routes() {
   }, [path]);
 
   switch (path) {
+    case "/landing":
+      return <LandingPage />;
     case "/":
       return <DashboardPage />;
     case "/wallet":
@@ -124,6 +127,7 @@ function Gate() {
   const { user, society, role, loading } = useAuth();
 
   // Public-accessible routes that don't require an active society session
+  if (path === "/landing") return <LandingPage />;
   if (path === "/portal") return <TenantPortalPage />;
   if (path === "/privacy") return <PrivacyPolicyPage />;
   if (path === "/terms") return <TermsPage />;

@@ -63,8 +63,11 @@ export function initLocalStore() {
       created_at: new Date().toISOString(),
     };
     setItem(KEYS.SOCIETIES, [defaultSociety]);
+  }
 
-    // Initial flats
+  const flats = getItem<Flat[]>(KEYS.FLATS, []);
+  if (flats.length === 0) {
+    const defaultSocietyId = getItem<Society[]>(KEYS.SOCIETIES, [])[0]?.id ?? "soc_default_101";
     const defaultFlats: Flat[] = [
       {
         id: "flat_101",
@@ -113,8 +116,11 @@ export function initLocalStore() {
       },
     ];
     setItem(KEYS.FLATS, defaultFlats);
+  }
 
-    // Initial Invoices
+  const invoices = getItem<Invoice[]>(KEYS.INVOICES, []);
+  if (invoices.length === 0) {
+    const defaultSocietyId = getItem<Society[]>(KEYS.SOCIETIES, [])[0]?.id ?? "soc_default_101";
     const currentMonth = new Date().toISOString().slice(0, 7);
     const defaultInvoices: Invoice[] = [
       {
@@ -337,6 +343,65 @@ export function updateLocalWalletBalance(walletId: string, newBalance: number): 
   }
 }
 
+export function getLocalWallet(userId: string): Wallet {
+  const wallets = getItem<Wallet[]>(KEYS.WALLETS, []);
+  let wallet = wallets.find((w) => w.user_id === userId);
+  if (!wallet) {
+    wallet = {
+      id: "wal_" + Math.random().toString(36).substring(2, 9),
+      user_id: userId,
+      balance: 0,
+      currency: "INR",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    wallets.push(wallet);
+    setItem(KEYS.WALLETS, wallets);
+  }
+  return wallet;
+}
+
+export function topUpLocalWallet(userId: string, amount: number, referenceId?: string): Wallet {
+  const wallet = getLocalWallet(userId);
+  const newBalance = wallet.balance + amount;
+  updateLocalWalletBalance(wallet.id, newBalance);
+  recordLocalWalletTransaction({
+    wallet_id: wallet.id,
+    type: "credit",
+    amount,
+    purpose: "topup",
+    reference_id: referenceId ?? "UPI_" + Math.random().toString(36).substring(2, 8).toUpperCase(),
+    description: "Wallet top-up via UPI / Gateway",
+    status: "completed",
+  });
+  return { ...wallet, balance: newBalance };
+}
+
+export function payFromLocalWallet(
+  userId: string,
+  amount: number,
+  purpose: WalletTransaction["purpose"],
+  referenceId?: string,
+  description?: string,
+): Wallet {
+  const wallet = getLocalWallet(userId);
+  if (wallet.balance < amount) {
+    throw new Error(`Insufficient wallet balance. Available: ₹${wallet.balance}, Required: ₹${amount}`);
+  }
+  const newBalance = wallet.balance - amount;
+  updateLocalWalletBalance(wallet.id, newBalance);
+  recordLocalWalletTransaction({
+    wallet_id: wallet.id,
+    type: "debit",
+    amount,
+    purpose,
+    reference_id: referenceId ?? "DEBIT_" + Math.random().toString(36).substring(2, 8).toUpperCase(),
+    description: description ?? `Payment for ${purpose.replace("_", " ")}`,
+    status: "completed",
+  });
+  return { ...wallet, balance: newBalance };
+}
+
 export function getLocalWalletTransactions(walletId: string): WalletTransaction[] {
   const txs = getItem<WalletTransaction[]>(KEYS.WALLET_TXS, []);
   return txs.filter((t) => t.wallet_id === walletId).sort((a, b) => b.created_at.localeCompare(a.created_at));
@@ -410,15 +475,20 @@ export function createLocalBuildingRegistration(
 export function updateLocalBuildingRegistrationStatus(
   regId: string,
   status: "verified" | "rejected",
-  adminNotes?: string,
-  adminId?: string,
+  adminNotesOrId?: string,
+  notesOrAdminId?: string,
 ): void {
   const regs = getLocalBuildingRegistrations();
   const idx = regs.findIndex((r) => r.id === regId);
   if (idx !== -1) {
     regs[idx].status = status;
-    regs[idx].admin_notes = adminNotes || null;
-    regs[idx].verified_by = adminId || "admin";
+    if (adminNotesOrId && (adminNotesOrId.startsWith("admin") || adminNotesOrId.startsWith("usr_"))) {
+      regs[idx].verified_by = adminNotesOrId;
+      regs[idx].admin_notes = notesOrAdminId || null;
+    } else {
+      regs[idx].admin_notes = adminNotesOrId || null;
+      regs[idx].verified_by = notesOrAdminId || "admin";
+    }
     regs[idx].verified_at = new Date().toISOString();
     setItem(KEYS.REGISTRATIONS, regs);
 
@@ -555,20 +625,34 @@ export function deleteLocalFlat(flatId: string): void {
   );
 }
 
-export function saveLocalTower(tower: { name: string; society_id: string }): { id: string; name: string; society_id: string; created_at: string } {
-  const towers = getItem<any[]>("habitra.db.towers", [
-    { id: "tower_1", name: "Tower A (Aster)", society_id: tower.society_id, created_at: new Date().toISOString() },
-    { id: "tower_2", name: "Tower B (Birch)", society_id: tower.society_id, created_at: new Date().toISOString() },
-  ]);
+export function saveLocalTower(
+  towerOrSocietyId: string | { name: string; society_id: string },
+  nameOptional?: string,
+): { id: string; name: string; society_id: string; created_at: string } {
+  const societyId = typeof towerOrSocietyId === "string" ? towerOrSocietyId : towerOrSocietyId.society_id;
+  const towerName = typeof towerOrSocietyId === "string" ? (nameOptional ?? "New Tower") : towerOrSocietyId.name;
+
+  const towers = getItem<any[]>("habitra.db.towers", []);
   const newTower = {
     id: "tower_" + Math.random().toString(36).substring(2, 9),
-    name: tower.name.trim(),
-    society_id: tower.society_id,
+    name: towerName.trim(),
+    society_id: societyId,
     created_at: new Date().toISOString(),
   };
   towers.push(newTower);
   setItem("habitra.db.towers", towers);
   return newTower;
+}
+
+export function getLocalTowers(societyId: string): any[] {
+  const towers = getItem<any[]>("habitra.db.towers", []);
+  if (towers.length === 0 && societyId === "soc_default_101") {
+    return [
+      { id: "tower_1", name: "Tower A (Aster)", society_id: societyId, created_at: new Date().toISOString() },
+      { id: "tower_2", name: "Tower B (Birch)", society_id: societyId, created_at: new Date().toISOString() },
+    ];
+  }
+  return towers.filter((t) => t.society_id === societyId);
 }
 
 // ==========================================
@@ -687,5 +771,16 @@ export function deleteLocalOwner(ownerId: string): void {
     owners.filter((o) => o.id !== ownerId),
   );
 }
+
+export function getLocalTenants(societyId: string): Tenant[] {
+  const tenants = getItem<Tenant[]>(KEYS.TENANTS, []);
+  return tenants.filter((t) => t.society_id === societyId);
+}
+
+export function getLocalOwners(societyId: string): FlatOwner[] {
+  const owners = getItem<FlatOwner[]>(KEYS.OWNERS, []);
+  return owners.filter((o) => o.society_id === societyId);
+}
+
 
 
